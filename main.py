@@ -11,9 +11,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 class OrderTotalCalculator:
     COMPLETED_ORDER_STATUS = "Виконано"
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, manual_auth=False):
         self.email = email
         self.password = password
+        self.manual_auth = manual_auth
 
         self.driver = webdriver.Chrome()
         self.driver.maximize_window()
@@ -29,24 +30,25 @@ class OrderTotalCalculator:
         wait = WebDriverWait(driver, 10)
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
-        # Open Login form
-        login_button = driver.find_element(
-            by=By.CSS_SELECTOR, value="button.header__button.ng-star-inserted"
-        )
+        if not self.manual_auth:
+            # Open Login form
+            login_button = driver.find_element(
+                by=By.CSS_SELECTOR, value="button.header__button.ng-star-inserted"
+            )
 
-        login_button.click()
+            login_button.click()
 
-        # Fill email and password
-        email_input = driver.find_element(by=By.ID, value="auth_email")
-        email_input.send_keys(self.email)
-        password_input = driver.find_element(by=By.ID, value="auth_pass")
-        password_input.send_keys(self.password)
+            # Fill email and password
+            email_input = driver.find_element(by=By.ID, value="auth_email")
+            email_input.send_keys(self.email)
+            password_input = driver.find_element(by=By.ID, value="auth_pass")
+            password_input.send_keys(self.password)
 
-        # Click on submit login form button
-        submit_login_form_button = driver.find_element(
-            by=By.CSS_SELECTOR, value="button.auth-modal__submit"
-        )
-        submit_login_form_button.click()
+            # Click on submit login form button
+            submit_login_form_button = driver.find_element(
+                by=By.CSS_SELECTOR, value="button.auth-modal__submit"
+            )
+            submit_login_form_button.click()
 
         # Wait for user to manually complete login process
         input("Press Enter once you are logged in: ")
@@ -127,6 +129,9 @@ def main():
     )
     parser.add_argument("--email", help="Email for login on Rozetka.")
     parser.add_argument("--password", help="Password for login on Rozetka.")
+    parser.add_argument(
+        "--manual-auth", help="Manually complete login process.", action="store_true"
+    )
 
     args = parser.parse_args()
 
@@ -140,7 +145,7 @@ def main():
         return
 
     total_spent_money = OrderTotalCalculator(
-        email=email, password=password
+        email=email, password=password, manual_auth=args.manual_auth
     ).get_total_spent()
 
     print(f"Total spent money on Rozetka: {total_spent_money} ₴")
